@@ -14,8 +14,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -127,3 +125,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# GeoIP2 Databases
+*.mmdb
