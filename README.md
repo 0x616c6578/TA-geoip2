@@ -29,9 +29,4 @@ See [usage](documentation/usage.md) for detailed usage instructions.
 
 Where `<geoip-datebases>` is one or more of:  `anonymous_ip`, `city`, `connection_type`, `domain`, `isp`, or `all`.
 
-This will include fields from the requested databases, as defined below.
-
-
-
-## Databases
-See [databases](documentation/databases.md) for a list of attributes (fields) extracted from each database.
+This will include fields from the requested databases, as defined in the [databases documentation](documentation/databases.md).
