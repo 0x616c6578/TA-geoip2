@@ -11,7 +11,7 @@ This Splunk technology add-on provides a custom search commmand (`geoip`) to que
     - **Anonymous IP (Proxy Detection)**:  GeoIP2-Anonymous-IP.mmdb
     - **ISP**:  GeoIP2-ISP.mmdb
     - **Domain**:  GeoIP2-Domain.mmdb
-    - **Connection** Type:  GeoIP2-Connection-Type.mmdb
+    - **Connection Type**:  GeoIP2-Connection-Type.mmdb
 
 
 ## Installation
