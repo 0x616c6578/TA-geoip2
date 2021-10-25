@@ -17,8 +17,7 @@ This Splunk technology add-on provides a custom search commmand (`geoip`) to que
 ## Installation
 
 1. Install this TA under `$SPLUNK_HOME/etc/apps`.
-2. Restart Splunk.
-3. Copy any available MaxMind GeoIP2 databases to `$SPLUNK_HOME/etc/apps/TA-geoip2/data/databases/`.
+2. Copy any available MaxMind GeoIP2 databases to `$SPLUNK_HOME/etc/apps/TA-geoip2/data/databases/`.
 
 <br>
 
