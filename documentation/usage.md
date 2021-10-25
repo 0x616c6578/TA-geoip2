@@ -59,7 +59,7 @@ Add location information to web access events. By default, the `geoip` command a
 sourcetype=access_* | geoip field=clientip
 ```
 ### 2. Add a prefix to the fields added by the geoip command
-Prefix the fields added by the `geoip`` command with **ip.**. Add all of the fields in the City and ISP database file to the results. 
+Prefix the fields added by the `geoip` command with "**ip.**". Add all of the fields in the City and ISP database file to the results. 
 ```
 sourcetype=access_* | geoip prefix=ip. field=clientip city,isp | fields clientip,ip.*
 ```
