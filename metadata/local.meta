@@ -1,0 +1,17 @@
+[]
+access = read : [ * ], write : [ * ]
+export = system
+version = 8.2.2.1
+modtime = 1635151641.273890500
+
+[app/ui]
+version = 8.2.2.1
+modtime = 1635155397.005258700
+
+[app/launcher]
+version = 8.2.2.1
+modtime = 1635155397.017269200
+
+[app/package/check_for_updates]
+version = 8.2.2.1
+modtime = 1635155397.031267100

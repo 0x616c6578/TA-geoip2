@@ -1,43 +1,8 @@
-# TA-geoip2
-
-MaxMind GeoIP2 offerings provide IP geolocation and proxy detection for a wide range of applications including content customization, advertising, digital rights management, compliance, fraud detection, and security.
-
-This Splunk technology add-on provides a custom search commmand (`geoip`) to query MaxMind GeoIP2 databases for IP address enrichment.
-
-## Prerequisites 
-- Splunk Enterprise version 8.0 or later, with Python 3.7.  _Splunk Enterprise version 7.x is not supported_.
-- Access to one or more of the MaxMind GeoIP2 databases:
-    - **City**:  GeoIP2-City.mmdb / GeoLite2-City.mmdb
-    - **Anonymous IP (Proxy Detection)**:  GeoIP2-Anonymous-IP.mmdb
-    - **ISP**:  GeoIP2-ISP.mmdb
-    - **Domain**:  GeoIP2-Domain.mmdb
-    - **Connection** Type:  GeoIP2-Connection-Type.mmdb
-
-
-## Installation
-
-1. Install this TA under `$SPLUNK_HOME/etc/apps`.
-2. Restart Splunk.
-3. Copy any available MaxMind GeoIP2 databases to `$SPLUNK_HOME/etc/apps/TA-geoip2/data/databases/`.
-
-<br>
-
-## Usage
-
-See [usage](documentation/usage.md) for detailed usage instructions.
-
-**Syntax**:  `geoip [prefix=<string>] [field=<ip-address-fieldname>] <geoip-databases>`
-
-Where `<geoip-datebases>` is one or more of:  `anonymous_ip`, `city`, `connection_type`, `domain`, `isp`, or `all`.
-
-This will include fields from the requested databases, as defined below.
-
-
-
-## Databases
+# Databases
 The following attributes (fields) may be extracted from the GeoIP2 databases:
+>Refer to the [usage documentation](usage.md) to learn how to make use of these databases.
 
-### City
+## City
 _Determine the country, subdivisions (regions), city, and postal code associated with IPv4 and IPv6 addresses worldwide._
 
 
@@ -54,7 +19,7 @@ _Determine the country, subdivisions (regions), city, and postal code associated
 | network | The network associated with the record. In particular, this is the largest network where all of the fields besides ip_address have the same value. |
 
 
-### Anonymous IP (Proxy Detection)
+## Anonymous IP (Proxy Detection)
 
 _VPN, hosting, and proxy detection for geoblocking, geofencing, geomarketing, and security and risk applications._
 
@@ -68,7 +33,7 @@ _VPN, hosting, and proxy detection for geoblocking, geofencing, geomarketing, an
 | is_tor_exit_node | This is true if the IP address is a Tor exit node. |
 | network | The network associated with the record. In particular, this is the largest network where all of the fields besides ip_address have the same value. |
 
-### ISP
+## ISP
 
 _Determine the Internet Service Provider, Registering Organization, and AS Number associated with an IP address_
 
@@ -80,7 +45,7 @@ _Determine the Internet Service Provider, Registering Organization, and AS Numbe
 | organization | The name of the organization associated with the IP address. |
 | network | The network associated with the record. In particular, this is the largest network where all of the fields besides ip_address have the same value. |
 
-### Domain
+## Domain
 
 _Look up the second level domain names associated with IP addresses_
 
@@ -88,7 +53,7 @@ _Look up the second level domain names associated with IP addresses_
 | :-  | :- |
 | domain | The second level domain associated with the IP address. This will be something like "example.com" or "example.co.uk", not "foo.example.com". |
 
-### Connection Type
+## Connection Type
 
 _Estimate the connection speed of your visitors based on their IP address_
 
