@@ -21,6 +21,7 @@ class GeoIPCommand(StreamingCommand):
                 added field names to avoid name collisions with existing fields. For example, if you specify prefix=ip. the field names that are added to the events become ip.isp, ip.network, etc.
             **Default:** NULL/empty string''',
         require=False,
+        default=None,
         validate=validators.Fieldname())
 
     field = Option(
@@ -32,6 +33,14 @@ class GeoIPCommand(StreamingCommand):
         default="ip",
         validate=validators.Fieldname())
 
+    fillnull = Option(
+        doc='''
+            **Syntax:** **fillnull=***<string>*
+            **Description:** Specify the value to fill null fields with.
+            **Default:** NULL/empty string''',
+        require=False,
+        default=None)
+
 
     def stream(self, events):
         ''' Generator function that processes and yields event records to the Splunk stream pipeline.
@@ -40,6 +49,7 @@ class GeoIPCommand(StreamingCommand):
         
         ip_field=self.field
         prefix = '' if not self.prefix else self.prefix
+
         input_databases = [database.lower() for database in self.fieldnames] if self.fieldnames else ["city"]
 
         # Store the database reader object for each MaxMind DB
@@ -97,86 +107,115 @@ class GeoIPCommand(StreamingCommand):
             anonymous_ip_reader = database_readers.get('Anonymous-IP')
             if anonymous_ip_reader:
                 try:
-                    anonymous_ip_response = anonymous_ip_reader.anonymous_ip(ip)
-                    new_fields.update({
-                        prefix + 'is_anonymous': anonymous_ip_response.is_anonymous,
-                        prefix + 'is_anonymous_vpn': anonymous_ip_response.is_anonymous_vpn,
-                        prefix + 'is_hosting_provider': anonymous_ip_response.is_hosting_provider,
-                        prefix + 'is_public_proxy': anonymous_ip_response.is_public_proxy,
-                        prefix + 'is_residential_proxy': anonymous_ip_response.is_residential_proxy,
-                        prefix + 'is_tor_exit_node': anonymous_ip_response.is_tor_exit_node,
-                        prefix + 'network': anonymous_ip_response.network})
-                except AddressNotFoundError:
-                    pass    # Expected behaviour
+                    response = anonymous_ip_reader.anonymous_ip(ip)
+                except AddressNotFoundError:    # Expected behaviour; the entry was not in the database
+                    response = None
                 except ValueError:
                     self.logger.error('The IP address is invalid: %s', event[ip_field])
+                finally:
+                    anonymous_ip_fields = {
+                        'is_anonymous': response.is_anonymous if response else self.fillnull,
+                        'is_anonymous_vpn': response.is_anonymous_vpn if response else self.fillnull,
+                        'is_hosting_provider': response.is_hosting_provider if response else self.fillnull,
+                        'is_public_proxy': response.is_public_proxy if response else self.fillnull,
+                        'is_residential_proxy': response.is_residential_proxy if response else self.fillnull,
+                        'is_tor_exit_node': response.is_tor_exit_node if response else self.fillnull,
+                        'network': response.network if response else self.fillnull}
+
+                    if self.prefix:
+                        anonymous_ip_fields = {prefix + field: value for field,value in anonymous_ip_fields.items()}
+                    new_fields.update(anonymous_ip_fields)
                     
 
             connection_type_reader = database_readers.get('Connection-Type')
             if connection_type_reader:
                 try:
-                    connection_type_response = connection_type_reader.connection_type(ip)
-                    new_fields.update({
-                        prefix + 'connection_type': connection_type_response.connection_type,
-                        prefix + 'network': connection_type_response.network})
-                except AddressNotFoundError:
-                    pass    # Expected behaviour
+                    response = connection_type_reader.connection_type(ip)
+                except AddressNotFoundError:    # Expected behaviour; the entry was not in the database
+                    response = None
                 except ValueError:
                     self.logger.error('The IP address is invalid: %s', event[ip_field])
+                finally:
+                    connection_type_fields = {
+                        'connection_type': response.connection_type if response else self.fillnull,
+                        'network': response.network if response else self.fillnull}
+
+                    if self.prefix:
+                        connection_type_fields = {prefix + field: value 
+                            for field,value in connection_type_fields.items()}
+                    new_fields.update(connection_type_fields)
+
 
             domain_reader = database_readers.get('Domain')
             if domain_reader:
                 try:
-                    domain_response = domain_reader.domain(ip)
-                    new_fields.update({
-                        prefix + 'domain': domain_response.domain})
-                except AddressNotFoundError:
-                    pass    # Expected behaviour
+                    response = domain_reader.domain(ip)
+                except AddressNotFoundError:    # Expected behaviour; the entry was not in the database
+                    response = None
                 except ValueError:
                     self.logger.error('The IP address is invalid: %s', event[ip_field])
+                finally:
+                    domain_fields = {
+                        'domain': response.domain if response else self.fillnull}
+
+                    if self.prefix:
+                        domain_fields = {prefix + field: value for field,value in domain_fields.items()}
+                    new_fields.update(domain_fields)
+
 
             isp_reader = database_readers.get('ISP')
             if isp_reader:
                 try:
-                    isp_response = isp_reader.isp(ip)
-                    new_fields.update({
-                        prefix + 'autonomous_system_number': isp_response.autonomous_system_number,
-                        prefix + 'autonomous_system_organization': isp_response.autonomous_system_organization,
-                        prefix + 'isp': isp_response.isp,
-                        prefix + 'organization': isp_response.organization,
-                        prefix + 'network': isp_response.network})
-                except AddressNotFoundError:
-                    pass    # Expected behaviour
+                    response = isp_reader.isp(ip)
+                except AddressNotFoundError:    # Expected behaviour; the entry was not in the database
+                    response = None
                 except ValueError:
                     self.logger.error('The IP address is invalid: %s', event[ip_field])
+                finally:
+                    isp_fields = {
+                        'autonomous_system_number': response.autonomous_system_number if response else self.fillnull,
+                        'autonomous_system_organization': response.autonomous_system_organization if response else self.fillnull,
+                        'isp': response.isp if response else self.fillnull,
+                        'organization': response.organization if response else self.fillnull,
+                        'network': response.network if response else self.fillnull}
+
+                    if self.prefix:
+                        isp_fields = {prefix + field: value for field,value in isp_fields.items()}
+                    new_fields.update(isp_fields)
+
 
             city_reader = database_readers.get('City')
             if city_reader:
-                try:
-                    city_response = city_reader.city(ip)
+                
 
+                try:
+                    response = city_reader.city(ip)
                     # Show the registered country where the represented (user) country is not available.
                     #   This may not reflect the users' country.
-                    country = city_response.country.name
-                    country_code = city_response.country.iso_code
-                    if country is None:
-                        country = city_response.registered_country.name + ' (registered)'
-                        country_code = city_response.registered_country.iso_code + ' (registered)'
-
-                    new_fields.update({
-                        prefix + 'Country': country,
-                        prefix + 'Region': city_response.subdivisions.most_specific.name,
-                        prefix + 'City': city_response.city.name,
-                        prefix + 'lat': city_response.location.latitude,
-                        prefix + 'lon': city_response.location.longitude,
-                        prefix + 'Region.code': city_response.subdivisions.most_specific.iso_code,
-                        prefix + 'Postal.code': city_response.postal.code,
-                        prefix + 'Country.code': country_code,
-                        prefix + 'network': city_response.traits.network})
-                except AddressNotFoundError:
-                    pass    # Expected behaviour
+                    country = response.country.name
+                    country_code = response.country.iso_code
+                    if country is None and response.registered_country.name is not None:
+                        country = response.registered_country.name + ' (registered)'
+                        country_code = response.registered_country.iso_code + ' (registered)'
+                except AddressNotFoundError:    # Expected behaviour; the entry was not in the database
+                    response = None
                 except ValueError:
                     self.logger.error('The IP address is invalid: %s', event[ip_field])
+                finally:
+                    city_fields = {
+                        'Country': country if response else self.fillnull,
+                        'Region': response.subdivisions.most_specific.name if response else self.fillnull,
+                        'City': response.city.name if response else self.fillnull,
+                        'lat': response.location.latitude if response else self.fillnull,
+                        'lon': response.location.longitude if response else self.fillnull,
+                        'Region.code': response.subdivisions.most_specific.iso_code if response else self.fillnull,
+                        'Postal.code': response.postal.code if response else self.fillnull,
+                        'Country.code': country_code if response else self.fillnull,
+                        'network': response.traits.network if response else self.fillnull}
+
+                    if self.prefix:
+                        city_fields = {prefix + field: value for field,value in city_fields.items()}
+                    new_fields.update(city_fields)
 
             event.update(new_fields)
             yield event
