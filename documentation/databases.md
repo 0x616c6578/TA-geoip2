@@ -8,8 +8,8 @@ _Determine the country, subdivisions (regions), city, and postal code associated
 
 | field | Description |
 | :-  | :- |
-| country |  The name of the country. |
-| country.code | The two-character [ISO 3166-1](http://en.wikipedia.org/wiki/ISO_3166-1) alpha code for the country. |
+| country |  The name of the country<sup>1</sup>. |
+| country.code | The two-character [ISO 3166-1](http://en.wikipedia.org/wiki/ISO_3166-1) alpha code for the country<sup>1</sup>. |
 | region | The name of the subdivision (region). |
 | region.code | This is a string up to three characters long containing the subdivision portion of the [ISO 3166-2 code](http://en.wikipedia.org/wiki/ISO_3166-2). |
 | city | The name of the city. |
@@ -17,6 +17,7 @@ _Determine the country, subdivisions (regions), city, and postal code associated
 | location.longitude |  The approximate longitude of the location associated with the IP address. This value is not precise and should not be used to identify a particular address or household. |
 | postal.code | The postal code of the location. Postal codes are not available for all countries. In some countries, this will only contain part of the postal code. |
 | network | The network associated with the record. In particular, this is the largest network where all of the fields besides ip_address have the same value. |
+> 1:  If the field is suffixed with _(registered)_, the value represents the country where the ISP has registered a given IP block in and may differ from the user's country.
 
 
 ## Anonymous IP (Proxy Detection)

@@ -13,7 +13,7 @@ For IP addresses which do not have a location, such as internal addresses, no fi
 
 ## Syntax
 ```
-geoip [prefix=<string>] [field=<ip-address-fieldname>] <geoip-databases>
+geoip [prefix=<string>] [fillnull=<string>] [field=<ip-address-fieldname>] <geoip-databases>
 ```
 
 ### Required arguments
@@ -24,6 +24,13 @@ None
 #### prefix
 > **Syntax:** `prefix=<string>`<br>
 > **Description:** Specify a string to prefix the field name. With this argument you can add a prefix to the added field names to avoid name collisions with existing fields. For example, if you specify `prefix=ip,` the field names that are added to the events become _ip.City, ip.County, ip.lat_, and so forth.<br>
+> **Default:** NULL/empty string
+
+<br>
+
+#### fillnull
+> **Syntax:** `fillnull=<string>`<br>
+> **Description:** Specify a string to fill in null fields. With this argument you can add a string to all fields for a database query which did not return any results. For example, if you specify `fillnull="-"`, the fields will be filled with "-". This is necessary if you want to use the fields in a `<by-clause>` with [stats](https://docs.splunk.com/Documentation/Splunk/latest/SearchReference/Stats).<br>
 > **Default:** NULL/empty string
 
 <br>
