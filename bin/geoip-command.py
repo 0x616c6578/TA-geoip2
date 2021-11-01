@@ -154,15 +154,24 @@ class GeoIPCommand(StreamingCommand):
             if city_reader:
                 try:
                     city_response = city_reader.city(ip)
+
+                    # Show the registered country where the represented (user) country is not available.
+                    #   This may not reflect the users' country.
+                    country = city_response.country.name
+                    country_code = city_response.country.iso_code
+                    if country is None:
+                        country = city_response.registered_country.name + ' (registered)'
+                        country_code = city_response.registered_country.iso_code + ' (registered)'
+
                     new_fields.update({
-                        prefix + 'country': city_response.country.name,
+                        prefix + 'country': country,
                         prefix + 'region': city_response.subdivisions.most_specific.name,
                         prefix + 'city': city_response.city.name,
                         prefix + 'location.latitude': city_response.location.latitude,
                         prefix + 'location.longitude': city_response.location.longitude,
                         prefix + 'region.code': city_response.subdivisions.most_specific.iso_code,
                         prefix + 'postal.code': city_response.postal.code,
-                        prefix + 'country.code': city_response.country.iso_code,
+                        prefix + 'country.code': country_code,
                         prefix + 'network': city_response.traits.network})
                 except AddressNotFoundError:
                     pass    # Expected behaviour
