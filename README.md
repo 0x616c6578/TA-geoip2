@@ -31,7 +31,7 @@ This Splunk technology add-on provides a custom search commmand (`geoip`) to que
 
 ## Architecture
 
-The `geoip` command is a distributable streaming command (see [Command types](http://docs.splunk.com/Documentation/Splunk/8.2.2/SearchReference/Commandsbytype))  The replication settings within [distsearch.conf](default/distsearch.conf) will allow the command to run on indexers.
+The `geoip` command is a distributable streaming command (see [Command types](http://docs.splunk.com/Documentation/Splunk/8.2.2/SearchReference/Commandsbytype)).  The replication settings within [distsearch.conf](default/distsearch.conf) will allow the command to run on indexers.
 
 
 ## Installation
