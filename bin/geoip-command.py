@@ -164,14 +164,14 @@ class GeoIPCommand(StreamingCommand):
                         country_code = city_response.registered_country.iso_code + ' (registered)'
 
                     new_fields.update({
-                        prefix + 'country': country,
-                        prefix + 'region': city_response.subdivisions.most_specific.name,
-                        prefix + 'city': city_response.city.name,
-                        prefix + 'location.latitude': city_response.location.latitude,
-                        prefix + 'location.longitude': city_response.location.longitude,
-                        prefix + 'region.code': city_response.subdivisions.most_specific.iso_code,
-                        prefix + 'postal.code': city_response.postal.code,
-                        prefix + 'country.code': country_code,
+                        prefix + 'Country': country,
+                        prefix + 'Region': city_response.subdivisions.most_specific.name,
+                        prefix + 'City': city_response.city.name,
+                        prefix + 'lat': city_response.location.latitude,
+                        prefix + 'lon': city_response.location.longitude,
+                        prefix + 'Region.code': city_response.subdivisions.most_specific.iso_code,
+                        prefix + 'Postal.code': city_response.postal.code,
+                        prefix + 'Country.code': country_code,
                         prefix + 'network': city_response.traits.network})
                 except AddressNotFoundError:
                     pass    # Expected behaviour
