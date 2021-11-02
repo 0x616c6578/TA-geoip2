@@ -44,7 +44,7 @@ The `geoip` command is a distributable streaming command (see [Command types](ht
 
 See [usage](documentation/usage.md) for detailed usage instructions.
 
-**Syntax**:  `geoip [prefix=<string>] [field=<ip-address-fieldname>] <geoip-databases>`
+**Syntax**:  `geoip [prefix=<string>] [fillnull=<string>] [field=<ip-address-fieldname>] <geoip-databases>`
 
 Where `<geoip-datebases>` is one or more of:  `anonymous_ip`, `city`, `connection_type`, `domain`, `isp`, or `all`.
 
