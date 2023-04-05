@@ -55,6 +55,7 @@ class GeoIPCommand(StreamingCommand):
         # Store the database reader object for each MaxMind DB
         database_readers = {
             'Anonymous-IP': None,
+            'ASN': None,
             'City': None,
             'Connection-Type': None,
             'Domain': None,
@@ -125,7 +126,26 @@ class GeoIPCommand(StreamingCommand):
                     if self.prefix:
                         anonymous_ip_fields = {prefix + field: value for field,value in anonymous_ip_fields.items()}
                     new_fields.update(anonymous_ip_fields)
-                    
+
+
+            asn_reader = database_readers.get('ASN')
+            if asn_reader:
+                try:
+                    response = asn_reader.asn(ip)
+                except AddressNotFoundError:    # Expected behaviour; the entry was not in the database
+                    response = None
+                except ValueError:
+                    self.logger.error('The IP address is invalid: %s', event[ip_field])
+                finally:
+                    asn_fields = {
+                        'autonomous_system_number': response.autonomous_system_number if response else self.fillnull,
+                        'autonomous_system_organization': response.autonomous_system_organization if response else self.fillnull,
+                        'network': response.network if response else self.fillnull}
+
+                    if self.prefix:
+                        asn_fields = {prefix + field: value for field,value in asn_fields.items()}
+                    new_fields.update(asn_fields)
+
 
             connection_type_reader = database_readers.get('Connection-Type')
             if connection_type_reader:
