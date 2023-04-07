@@ -5,7 +5,6 @@ The following attributes (fields) may be extracted from the GeoIP2 databases:
 ## City
 _Determine the country, subdivisions (regions), city, and postal code associated with IPv4 and IPv6 addresses worldwide._
 
-
 | field | Description |
 | :-  | :- |
 | country |  The name of the country<sup>1</sup>. |
@@ -46,6 +45,15 @@ _Determine the Internet Service Provider, Registering Organization, and AS Numbe
 | organization | The name of the organization associated with the IP address. |
 | network | The network associated with the record. In particular, this is the largest network where all of the fields besides ip_address have the same value. |
 
+## Connection Type
+
+_Estimate the connection speed of your visitors based on their IP address_
+
+| field | Description |
+| :-  | :- |
+| connection_type | The connection type may take the following values: Dialup, Cable/DSL, Corporate, Cellular. Additional values may be added in the future.|
+| network | The network associated with the record. In particular, this is the largest network where all of the fields besides ip_address have the same value. |
+
 ## Domain
 
 _Look up the second level domain names associated with IP addresses_
@@ -54,11 +62,12 @@ _Look up the second level domain names associated with IP addresses_
 | :-  | :- |
 | domain | The second level domain associated with the IP address. This will be something like "example.com" or "example.co.uk", not "foo.example.com". |
 
-## Connection Type
+## ASN
 
-_Estimate the connection speed of your visitors based on their IP address_
+_Determine the Autonomous System Number and Registering Organization associated with an IP address_
 
 | field | Description |
 | :-  | :- |
-| connection_type | The connection type may take the following values: Dialup, Cable/DSL, Corporate, Cellular. Additional values may be added in the future.|
+| autonomous_system_number | The [autonomous system number](http://en.wikipedia.org/wiki/Autonomous_system_(Internet)) associated with the IP address. |
+| autonomous_system_organization | The organization associated with the registered [autonomous system number](http://en.wikipedia.org/wiki/Autonomous_system_(Internet)) for the IP address.
 | network | The network associated with the record. In particular, this is the largest network where all of the fields besides ip_address have the same value. |
