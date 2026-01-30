@@ -43,7 +43,7 @@ None
 <br>
 
 #### geoip-databases
-> **Syntax:** `((anonymous_ip | asn | city | connection_type | domain | isp)+ | all)`<br>
+> **Syntax:** `((anonymous_ip | asn | city | connection_type | domain | enterprise | isp)+ | all)`<br>
 > **Description:** Specify the MaxMind GeoIP2 databases to search include details from. See the [database documentation](databases.md) for a list of attributes(fields) which are included from each database.<br>
 > **Default:** `city`
 
