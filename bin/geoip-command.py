@@ -59,6 +59,7 @@ class GeoIPCommand(StreamingCommand):
             'City': None,
             'Connection-Type': None,
             'Domain': None,
+            'Enterprise': None,
             'ISP': None
         }
 
@@ -236,6 +237,35 @@ class GeoIPCommand(StreamingCommand):
                     if self.prefix:
                         city_fields = {prefix + field: value for field,value in city_fields.items()}
                     new_fields.update(city_fields)
+
+            enterprise_reader = database_readers.get('Enterprise')
+            if enterprise_reader:
+                try:
+                    response = enterprise_reader.enterprise(ip)
+                except AddressNotFoundError:    # Expected behaviour; the entry was not in the database
+                    response = None
+                except ValueError:
+                    self.logger.error('The IP address is invalid: %s', event[ip_field])
+                finally:
+                    enterprise_fields = {
+                        'ip_address': response.traits.ip_address if response else self.fillnull,
+                        'country': (f"{response.country.name} ({response.country.iso_code})") if response else self.fillnull,
+                        'city': response.city.name if response else self.fillnull,
+                        'postal_code': response.postal.code if response else self.fillnull,
+                        'latitude': response.location.latitude if response else self.fillnull,
+                        'longitude': response.location.longitude if response else self.fillnull,
+                        'accuracy_radius': response.location.accuracy_radius if response else self.fillnull,
+                        'autonomous_system_number': response.traits.autonomous_system_number if response else self.fillnull,
+                        'autonomous_system_organization': response.traits.autonomous_system_organization if response else self.fillnull,
+                        'isp': response.traits.isp if response else self.fillnull,
+                        'organization': response.traits.organization if response else self.fillnull,
+                        'domain': response.traits.domain if response else self.fillnull,
+                        'user_type': response.traits.user_type if response else self.fillnull,
+                        'connection_type': response.traits.connection_type if response else self.fillnull}
+
+                    if self.prefix:
+                        enterprise_fields = {prefix + field: value for field,value in enterprise_fields.items()}
+                    new_fields.update(enterprise_fields)
 
             event.update(new_fields)
             yield event

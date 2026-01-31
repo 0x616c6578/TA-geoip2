@@ -71,3 +71,23 @@ _Determine the Autonomous System Number and Registering Organization associated 
 | autonomous_system_number | The [autonomous system number](http://en.wikipedia.org/wiki/Autonomous_system_(Internet)) associated with the IP address. |
 | autonomous_system_organization | The organization associated with the registered [autonomous system number](http://en.wikipedia.org/wiki/Autonomous_system_(Internet)) for the IP address.
 | network | The network associated with the record. In particular, this is the largest network where all of the fields besides ip_address have the same value. |
+
+## Enterprise
+
+_Simplify the implementation and deployment of multiple GeoIP databases, and gain additional context around IP addresses for analytics, internet traffic routing, security, fraud detection, digital rights management, compliance, and more._
+
+| field | Description |
+| :-  | :- |
+| country | The name of the country. |
+| city | The name of the city. |
+| postal_code | The postal code of the location. Postal codes are not available for all countries. In some countries, this will only contain part of the postal code. |
+| latitude | The approximate latitude of the location associated with the IP address. This value is not precise and should not be used to identify a particular address or household. |
+| longitude | The approximate longitude of the location associated with the IP address. This value is not precise and should not be used to identify a particular address or household. |
+| accuracy_radius | The approximate accuracy radius, in kilometers, around the latitude and longitude for the geographical entity (country, subdivision, city, or postal code) associated with the IP address. |
+| autonomous_system_number | The [autonomous system number](http://en.wikipedia.org/wiki/Autonomous_system_(Internet)) associated with the IP address. |
+| autonomous_system_organization | The organization associated with the registered [autonomous system number](http://en.wikipedia.org/wiki/Autonomous_system_(Internet)) for the IP address. |
+| isp | The name of the ISP associated with the IP address. |
+| organization | The name of the organization associated with the IP address. |
+| domain | The second level domain associated with the IP address. This will be something like "example.com" or "example.co.uk", not "foo.example.com". |
+| user_type | Insight into the type of user of the IP address (cellular, residential, business, traveler, government, college, and more). |
+| connection_type | Possible values are cable/DSL, cellular, corporate, or satellite. Most high-speed consumer connections are covered under the cable/DSL category. |

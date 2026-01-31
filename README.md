@@ -27,6 +27,7 @@ This Splunk technology add-on provides a custom search commmand (`geoip`) to que
     - **Connection Type**:  GeoIP2-Connection-Type.mmdb
     - **Domain**:  GeoIP2-Domain.mmdb
     - **ASN**:  GeoLite2-ASN.mmdb
+    - **Enterprise**:  GeoIP2-Enterprise.mmdb
     > MaxMind provides free versions of some of their databases (GeoLite2), found [here](https://www.maxmind.com/en/geolite2/signup).
 
 
@@ -47,7 +48,7 @@ See [usage](documentation/usage.md) for detailed usage instructions.
 
 **Syntax**:  `geoip [prefix=<string>] [fillnull=<string>] [field=<ip-address-fieldname>] <geoip-databases>`
 
-Where `<geoip-datebases>` is one or more of:  `anonymous_ip`, `asn`, `city`, `connection_type`, `domain`, `isp`, or `all`.
+Where `<geoip-datebases>` is one or more of:  `anonymous_ip`, `asn`, `city`, `connection_type`, `domain`, `enterprise`, `isp`, or `all`.
 
 This will include fields from the requested databases, as defined in the [databases documentation](documentation/databases.md).
 
