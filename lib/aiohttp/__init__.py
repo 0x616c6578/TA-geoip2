@@ -1,44 +1,62 @@
-__version__ = "3.7.4.post0"
+__version__ = "3.13.3"
 
-from typing import Tuple
+from typing import TYPE_CHECKING, Tuple
 
 from . import hdrs as hdrs
 from .client import (
-    BaseConnector as BaseConnector,
-    ClientConnectionError as ClientConnectionError,
-    ClientConnectorCertificateError as ClientConnectorCertificateError,
-    ClientConnectorError as ClientConnectorError,
-    ClientConnectorSSLError as ClientConnectorSSLError,
-    ClientError as ClientError,
-    ClientHttpProxyError as ClientHttpProxyError,
-    ClientOSError as ClientOSError,
-    ClientPayloadError as ClientPayloadError,
-    ClientProxyConnectionError as ClientProxyConnectionError,
-    ClientRequest as ClientRequest,
-    ClientResponse as ClientResponse,
-    ClientResponseError as ClientResponseError,
-    ClientSession as ClientSession,
-    ClientSSLError as ClientSSLError,
-    ClientTimeout as ClientTimeout,
-    ClientWebSocketResponse as ClientWebSocketResponse,
-    ContentTypeError as ContentTypeError,
-    Fingerprint as Fingerprint,
-    InvalidURL as InvalidURL,
-    NamedPipeConnector as NamedPipeConnector,
-    RequestInfo as RequestInfo,
-    ServerConnectionError as ServerConnectionError,
-    ServerDisconnectedError as ServerDisconnectedError,
-    ServerFingerprintMismatch as ServerFingerprintMismatch,
-    ServerTimeoutError as ServerTimeoutError,
-    TCPConnector as TCPConnector,
-    TooManyRedirects as TooManyRedirects,
-    UnixConnector as UnixConnector,
-    WSServerHandshakeError as WSServerHandshakeError,
-    request as request,
+    BaseConnector,
+    ClientConnectionError,
+    ClientConnectionResetError,
+    ClientConnectorCertificateError,
+    ClientConnectorDNSError,
+    ClientConnectorError,
+    ClientConnectorSSLError,
+    ClientError,
+    ClientHttpProxyError,
+    ClientOSError,
+    ClientPayloadError,
+    ClientProxyConnectionError,
+    ClientRequest,
+    ClientResponse,
+    ClientResponseError,
+    ClientSession,
+    ClientSSLError,
+    ClientTimeout,
+    ClientWebSocketResponse,
+    ClientWSTimeout,
+    ConnectionTimeoutError,
+    ContentTypeError,
+    Fingerprint,
+    InvalidURL,
+    InvalidUrlClientError,
+    InvalidUrlRedirectClientError,
+    NamedPipeConnector,
+    NonHttpUrlClientError,
+    NonHttpUrlRedirectClientError,
+    RedirectClientError,
+    RequestInfo,
+    ServerConnectionError,
+    ServerDisconnectedError,
+    ServerFingerprintMismatch,
+    ServerTimeoutError,
+    SocketTimeoutError,
+    TCPConnector,
+    TooManyRedirects,
+    UnixConnector,
+    WSMessageTypeError,
+    WSServerHandshakeError,
+    request,
+)
+from .client_middleware_digest_auth import DigestAuthMiddleware
+from .client_middlewares import ClientHandlerType, ClientMiddlewareType
+from .compression_utils import set_zlib_backend
+from .connector import (
+    AddrInfoType as AddrInfoType,
+    SocketFactoryType as SocketFactoryType,
 )
 from .cookiejar import CookieJar as CookieJar, DummyCookieJar as DummyCookieJar
 from .formdata import FormData as FormData
-from .helpers import BasicAuth as BasicAuth, ChainMapProxy as ChainMapProxy
+from .helpers import BasicAuth, ChainMapProxy, ETag
 from .http import (
     HttpVersion as HttpVersion,
     HttpVersion10 as HttpVersion10,
@@ -78,7 +96,6 @@ from .resolver import (
     DefaultResolver as DefaultResolver,
     ThreadedResolver as ThreadedResolver,
 )
-from .signals import Signal as Signal
 from .streams import (
     EMPTY_PAYLOAD as EMPTY_PAYLOAD,
     DataQueue as DataQueue,
@@ -100,17 +117,28 @@ from .tracing import (
     TraceRequestChunkSentParams as TraceRequestChunkSentParams,
     TraceRequestEndParams as TraceRequestEndParams,
     TraceRequestExceptionParams as TraceRequestExceptionParams,
+    TraceRequestHeadersSentParams as TraceRequestHeadersSentParams,
     TraceRequestRedirectParams as TraceRequestRedirectParams,
     TraceRequestStartParams as TraceRequestStartParams,
     TraceResponseChunkReceivedParams as TraceResponseChunkReceivedParams,
 )
 
+if TYPE_CHECKING:
+    # At runtime these are lazy-loaded at the bottom of the file.
+    from .worker import (
+        GunicornUVLoopWebWorker as GunicornUVLoopWebWorker,
+        GunicornWebWorker as GunicornWebWorker,
+    )
+
 __all__: Tuple[str, ...] = (
     "hdrs",
     # client
+    "AddrInfoType",
     "BaseConnector",
     "ClientConnectionError",
+    "ClientConnectionResetError",
     "ClientConnectorCertificateError",
+    "ClientConnectorDNSError",
     "ClientConnectorError",
     "ClientConnectorSSLError",
     "ClientError",
@@ -125,20 +153,33 @@ __all__: Tuple[str, ...] = (
     "ClientSession",
     "ClientTimeout",
     "ClientWebSocketResponse",
+    "ClientWSTimeout",
+    "ConnectionTimeoutError",
     "ContentTypeError",
     "Fingerprint",
+    "FlowControlDataQueue",
     "InvalidURL",
+    "InvalidUrlClientError",
+    "InvalidUrlRedirectClientError",
+    "NonHttpUrlClientError",
+    "NonHttpUrlRedirectClientError",
+    "RedirectClientError",
     "RequestInfo",
     "ServerConnectionError",
     "ServerDisconnectedError",
     "ServerFingerprintMismatch",
     "ServerTimeoutError",
+    "SocketFactoryType",
+    "SocketTimeoutError",
     "TCPConnector",
     "TooManyRedirects",
     "UnixConnector",
     "NamedPipeConnector",
     "WSServerHandshakeError",
     "request",
+    # client_middleware
+    "ClientMiddlewareType",
+    "ClientHandlerType",
     # cookiejar
     "CookieJar",
     "DummyCookieJar",
@@ -147,6 +188,9 @@ __all__: Tuple[str, ...] = (
     # helpers
     "BasicAuth",
     "ChainMapProxy",
+    "DigestAuthMiddleware",
+    "ETag",
+    "set_zlib_backend",
     # http
     "HttpVersion",
     "HttpVersion10",
@@ -183,12 +227,10 @@ __all__: Tuple[str, ...] = (
     "AsyncResolver",
     "DefaultResolver",
     "ThreadedResolver",
-    # signals
-    "Signal",
+    # streams
     "DataQueue",
     "EMPTY_PAYLOAD",
     "EofStream",
-    "FlowControlDataQueue",
     "StreamReader",
     # tracing
     "TraceConfig",
@@ -204,14 +246,33 @@ __all__: Tuple[str, ...] = (
     "TraceRequestChunkSentParams",
     "TraceRequestEndParams",
     "TraceRequestExceptionParams",
+    "TraceRequestHeadersSentParams",
     "TraceRequestRedirectParams",
     "TraceRequestStartParams",
     "TraceResponseChunkReceivedParams",
+    # workers (imported lazily with __getattr__)
+    "GunicornUVLoopWebWorker",
+    "GunicornWebWorker",
+    "WSMessageTypeError",
 )
 
-try:
-    from .worker import GunicornUVLoopWebWorker, GunicornWebWorker
 
-    __all__ += ("GunicornWebWorker", "GunicornUVLoopWebWorker")
-except ImportError:  # pragma: no cover
-    pass
+def __dir__() -> Tuple[str, ...]:
+    return __all__ + ("__doc__",)
+
+
+def __getattr__(name: str) -> object:
+    global GunicornUVLoopWebWorker, GunicornWebWorker
+
+    # Importing gunicorn takes a long time (>100ms), so only import if actually needed.
+    if name in ("GunicornUVLoopWebWorker", "GunicornWebWorker"):
+        try:
+            from .worker import GunicornUVLoopWebWorker as guv, GunicornWebWorker as gw
+        except ImportError:
+            return None
+
+        GunicornUVLoopWebWorker = guv  # type: ignore[misc]
+        GunicornWebWorker = gw  # type: ignore[misc]
+        return guv if name == "GunicornUVLoopWebWorker" else gw
+
+    raise AttributeError(f"module {__name__} has no attribute {name}")

@@ -1,7 +1,8 @@
 import re
-from typing import TYPE_CHECKING, Awaitable, Callable, Tuple, Type, TypeVar
+from typing import TYPE_CHECKING, Tuple, Type, TypeVar
 
-from .web_exceptions import HTTPPermanentRedirect, _HTTPMove
+from .typedefs import Handler, Middleware
+from .web_exceptions import HTTPMove, HTTPPermanentRedirect
 from .web_request import Request
 from .web_response import StreamResponse
 from .web_urldispatcher import SystemRoute
@@ -11,7 +12,7 @@ __all__ = (
     "normalize_path_middleware",
 )
 
-if TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:
     from .web_app import Application
 
 _Func = TypeVar("_Func")
@@ -21,7 +22,7 @@ async def _check_request_resolves(request: Request, path: str) -> Tuple[bool, Re
     alt_request = request.clone(rel_url=path)
 
     match_info = await request.app.router.resolve(alt_request)
-    alt_request._match_info = match_info  # type: ignore
+    alt_request._match_info = match_info
 
     if match_info.http_exception is None:
         return True, alt_request
@@ -30,12 +31,8 @@ async def _check_request_resolves(request: Request, path: str) -> Tuple[bool, Re
 
 
 def middleware(f: _Func) -> _Func:
-    f.__middleware_version__ = 1  # type: ignore
+    f.__middleware_version__ = 1  # type: ignore[attr-defined]
     return f
-
-
-_Handler = Callable[[Request], Awaitable[StreamResponse]]
-_Middleware = Callable[[Request, _Handler], Awaitable[StreamResponse]]
 
 
 def normalize_path_middleware(
@@ -43,12 +40,11 @@ def normalize_path_middleware(
     append_slash: bool = True,
     remove_slash: bool = False,
     merge_slashes: bool = True,
-    redirect_class: Type[_HTTPMove] = HTTPPermanentRedirect
-) -> _Middleware:
-    """
-    Middleware factory which produces a middleware that normalizes
-    the path of a request. By normalizing it means:
+    redirect_class: Type[HTTPMove] = HTTPPermanentRedirect,
+) -> Middleware:
+    """Factory for producing a middleware that normalizes the path of a request.
 
+    Normalizing means:
         - Add or remove a trailing slash to the path.
         - Double slashes are replaced by one.
 
@@ -74,12 +70,11 @@ def normalize_path_middleware(
     If merge_slashes is True, merge multiple consecutive slashes in the
     path into one.
     """
-
     correct_configuration = not (append_slash and remove_slash)
     assert correct_configuration, "Cannot both remove and append slash"
 
     @middleware
-    async def impl(request: Request, handler: _Handler) -> StreamResponse:
+    async def impl(request: Request, handler: Handler) -> StreamResponse:
         if isinstance(request.match_info.route, SystemRoute):
             paths_to_check = []
             if "?" in request.raw_path:
@@ -112,10 +107,15 @@ def normalize_path_middleware(
     return impl
 
 
-def _fix_request_current_app(app: "Application") -> _Middleware:
+def _fix_request_current_app(app: "Application") -> Middleware:
     @middleware
-    async def impl(request: Request, handler: _Handler) -> StreamResponse:
-        with request.match_info.set_current_app(app):
+    async def impl(request: Request, handler: Handler) -> StreamResponse:
+        match_info = request.match_info
+        prev = match_info.current_app
+        match_info.current_app = app
+        try:
             return await handler(request)
+        finally:
+            match_info.current_app = prev
 
     return impl

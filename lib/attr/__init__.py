@@ -1,51 +1,52 @@
-from __future__ import absolute_import, division, print_function
+# SPDX-License-Identifier: MIT
 
-import sys
+"""
+Classes Without Boilerplate
+"""
 
 from functools import partial
+from typing import Callable, Literal, Protocol
 
 from . import converters, exceptions, filters, setters, validators
 from ._cmp import cmp_using
 from ._config import get_run_validators, set_run_validators
-from ._funcs import asdict, assoc, astuple, evolve, has, resolve_types
+from ._funcs import asdict, assoc, astuple, has, resolve_types
 from ._make import (
     NOTHING,
     Attribute,
+    Converter,
     Factory,
+    _Nothing,
     attrib,
     attrs,
+    evolve,
     fields,
     fields_dict,
     make_class,
     validate,
 )
+from ._next_gen import define, field, frozen, mutable
 from ._version_info import VersionInfo
-
-
-__version__ = "21.2.0"
-__version_info__ = VersionInfo._from_version_string(__version__)
-
-__title__ = "attrs"
-__description__ = "Classes Without Boilerplate"
-__url__ = "https://www.attrs.org/"
-__uri__ = __url__
-__doc__ = __description__ + " <" + __uri__ + ">"
-
-__author__ = "Hynek Schlawack"
-__email__ = "hs@ox.cx"
-
-__license__ = "MIT"
-__copyright__ = "Copyright (c) 2015 Hynek Schlawack"
 
 
 s = attributes = attrs
 ib = attr = attrib
 dataclass = partial(attrs, auto_attribs=True)  # happy Easter ;)
 
+
+class AttrsInstance(Protocol):
+    pass
+
+
+NothingType = Literal[_Nothing.NOTHING]
+
 __all__ = [
-    "Attribute",
-    "Factory",
     "NOTHING",
+    "Attribute",
+    "AttrsInstance",
+    "Converter",
+    "Factory",
+    "NothingType",
     "asdict",
     "assoc",
     "astuple",
@@ -55,15 +56,19 @@ __all__ = [
     "attrs",
     "cmp_using",
     "converters",
+    "define",
     "evolve",
     "exceptions",
+    "field",
     "fields",
     "fields_dict",
     "filters",
+    "frozen",
     "get_run_validators",
     "has",
     "ib",
     "make_class",
+    "mutable",
     "resolve_types",
     "s",
     "set_run_validators",
@@ -72,7 +77,28 @@ __all__ = [
     "validators",
 ]
 
-if sys.version_info[:2] >= (3, 6):
-    from ._next_gen import define, field, frozen, mutable
 
-    __all__.extend((define, field, frozen, mutable))
+def _make_getattr(mod_name: str) -> Callable:
+    """
+    Create a metadata proxy for packaging information that uses *mod_name* in
+    its warnings and errors.
+    """
+
+    def __getattr__(name: str) -> str:
+        if name not in ("__version__", "__version_info__"):
+            msg = f"module {mod_name} has no attribute {name}"
+            raise AttributeError(msg)
+
+        from importlib.metadata import metadata
+
+        meta = metadata("attrs")
+
+        if name == "__version_info__":
+            return VersionInfo._from_version_string(meta["version"])
+
+        return meta["version"]
+
+    return __getattr__
+
+
+__getattr__ = _make_getattr(__name__)

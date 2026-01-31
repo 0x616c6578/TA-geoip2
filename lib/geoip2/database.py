@@ -1,46 +1,43 @@
-"""
-======================
-GeoIP2 Database Reader
-======================
+"""The database reader for MaxMind MMDB files."""
 
-"""
 import inspect
 import os
-from typing import Any, AnyStr, cast, IO, List, Optional, Type, Union
+from collections.abc import Sequence
+from typing import IO, Any, AnyStr, Optional, Union, cast
 
 import maxminddb
-
 from maxminddb import (
     MODE_AUTO,
-    MODE_MMAP,
-    MODE_MMAP_EXT,
+    MODE_FD,
     MODE_FILE,
     MODE_MEMORY,
-    MODE_FD,
+    MODE_MMAP,
+    MODE_MMAP_EXT,
 )
 
 import geoip2
-import geoip2.models
 import geoip2.errors
-from geoip2.types import IPAddress
+import geoip2.models
 from geoip2.models import (
     ASN,
+    ISP,
     AnonymousIP,
+    AnonymousPlus,
     City,
     ConnectionType,
     Country,
     Domain,
     Enterprise,
-    ISP,
 )
+from geoip2.types import IPAddress
 
 __all__ = [
     "MODE_AUTO",
-    "MODE_MMAP",
-    "MODE_MMAP_EXT",
+    "MODE_FD",
     "MODE_FILE",
     "MODE_MEMORY",
-    "MODE_FD",
+    "MODE_MMAP",
+    "MODE_MMAP_EXT",
     "Reader",
 ]
 
@@ -71,7 +68,7 @@ class Reader:
     def __init__(
         self,
         fileish: Union[AnyStr, int, os.PathLike, IO],
-        locales: Optional[List[str]] = None,
+        locales: Optional[Sequence[str]] = None,
         mode: int = MODE_AUTO,
     ) -> None:
         """Create GeoIP2 Reader.
@@ -134,9 +131,9 @@ class Reader:
         :returns: :py:class:`geoip2.models.Country` object
 
         """
-
         return cast(
-            Country, self._model_for(geoip2.models.Country, "Country", ip_address)
+            Country,
+            self._model_for(geoip2.models.Country, "Country", ip_address),
         )
 
     def city(self, ip_address: IPAddress) -> City:
@@ -160,7 +157,26 @@ class Reader:
         return cast(
             AnonymousIP,
             self._flat_model_for(
-                geoip2.models.AnonymousIP, "GeoIP2-Anonymous-IP", ip_address
+                geoip2.models.AnonymousIP,
+                "GeoIP2-Anonymous-IP",
+                ip_address,
+            ),
+        )
+
+    def anonymous_plus(self, ip_address: IPAddress) -> AnonymousPlus:
+        """Get the AnonymousPlus object for the IP address.
+
+        :param ip_address: IPv4 or IPv6 address as a string.
+
+        :returns: :py:class:`geoip2.models.AnonymousPlus` object
+
+        """
+        return cast(
+            AnonymousPlus,
+            self._flat_model_for(
+                geoip2.models.AnonymousPlus,
+                "GeoIP-Anonymous-Plus",
+                ip_address,
             ),
         )
 
@@ -173,7 +189,8 @@ class Reader:
 
         """
         return cast(
-            ASN, self._flat_model_for(geoip2.models.ASN, "GeoLite2-ASN", ip_address)
+            ASN,
+            self._flat_model_for(geoip2.models.ASN, "GeoLite2-ASN", ip_address),
         )
 
     def connection_type(self, ip_address: IPAddress) -> ConnectionType:
@@ -187,7 +204,9 @@ class Reader:
         return cast(
             ConnectionType,
             self._flat_model_for(
-                geoip2.models.ConnectionType, "GeoIP2-Connection-Type", ip_address
+                geoip2.models.ConnectionType,
+                "GeoIP2-Connection-Type",
+                ip_address,
             ),
         )
 
@@ -226,7 +245,8 @@ class Reader:
 
         """
         return cast(
-            ISP, self._flat_model_for(geoip2.models.ISP, "GeoIP2-ISP", ip_address)
+            ISP,
+            self._flat_model_for(geoip2.models.ISP, "GeoIP2-ISP", ip_address),
         )
 
     def _get(self, database_type: str, ip_address: IPAddress) -> Any:
@@ -239,33 +259,39 @@ class Reader:
         if record is None:
             raise geoip2.errors.AddressNotFoundError(
                 f"The address {ip_address} is not in the database.",
+                str(ip_address),
+                prefix_len,
             )
         return record, prefix_len
 
     def _model_for(
         self,
-        model_class: Union[Type[Country], Type[Enterprise], Type[City]],
+        model_class: Union[type[Country], type[Enterprise], type[City]],
         types: str,
         ip_address: IPAddress,
     ) -> Union[Country, Enterprise, City]:
         (record, prefix_len) = self._get(types, ip_address)
-        traits = record.setdefault("traits", {})
-        traits["ip_address"] = ip_address
-        traits["prefix_len"] = prefix_len
-        return model_class(record, locales=self._locales)
+        return model_class(
+            self._locales,
+            ip_address=ip_address,
+            prefix_len=prefix_len,
+            **record,
+        )
 
     def _flat_model_for(
         self,
         model_class: Union[
-            Type[Domain], Type[ISP], Type[ConnectionType], Type[ASN], Type[AnonymousIP]
+            type[Domain],
+            type[ISP],
+            type[ConnectionType],
+            type[ASN],
+            type[AnonymousIP],
         ],
         types: str,
         ip_address: IPAddress,
     ) -> Union[ConnectionType, ISP, AnonymousIP, Domain, ASN]:
         (record, prefix_len) = self._get(types, ip_address)
-        record["ip_address"] = ip_address
-        record["prefix_len"] = prefix_len
-        return model_class(record)
+        return model_class(ip_address, prefix_len=prefix_len, **record)
 
     def metadata(
         self,
@@ -278,5 +304,4 @@ class Reader:
 
     def close(self) -> None:
         """Closes the GeoIP2 database."""
-
         self._db_reader.close()

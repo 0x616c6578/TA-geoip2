@@ -1,10 +1,7 @@
-"""
-Errors
-======
+"""Typed errors thrown by this library."""
 
-"""
-
-from typing import Optional
+import ipaddress
+from typing import Optional, Union
 
 
 class GeoIP2Error(RuntimeError):
@@ -19,6 +16,35 @@ class GeoIP2Error(RuntimeError):
 class AddressNotFoundError(GeoIP2Error):
     """The address you were looking up was not found."""
 
+    ip_address: Optional[str]
+    """The IP address used in the lookup. This is only available for database
+    lookups.
+    """
+    _prefix_len: Optional[int]
+
+    def __init__(
+        self,
+        message: str,
+        ip_address: Optional[str] = None,
+        prefix_len: Optional[int] = None,
+    ) -> None:
+        super().__init__(message)
+        self.ip_address = ip_address
+        self._prefix_len = prefix_len
+
+    @property
+    def network(self) -> Optional[Union[ipaddress.IPv4Network, ipaddress.IPv6Network]]:
+        """The network associated with the error.
+
+        In particular, this is the largest network where no address would be
+        found. This is only available for database lookups.
+        """
+        if self.ip_address is None or self._prefix_len is None:
+            return None
+        return ipaddress.ip_network(
+            f"{self.ip_address}/{self._prefix_len}", strict=False
+        )
+
 
 class AuthenticationError(GeoIP2Error):
     """There was a problem authenticating the request."""
@@ -30,11 +56,14 @@ class HTTPError(GeoIP2Error):
     This class represents an HTTP transport error. It extends
     :py:exc:`GeoIP2Error` and adds attributes of its own.
 
-    :ivar http_status: The HTTP status code returned
-    :ivar uri: The URI queried
-    :ivar decoded_content: The decoded response content
-
     """
+
+    http_status: Optional[int]
+    """The HTTP status code returned"""
+    uri: Optional[str]
+    """The URI queried"""
+    decoded_content: Optional[str]
+    """The decoded response content"""
 
     def __init__(
         self,

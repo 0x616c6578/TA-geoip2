@@ -1,21 +1,17 @@
-"""
-============================
-WebServices Client API
-============================
+"""Client for GeoIP2 and GeoLite2 web services.
 
-This class provides a client API for all the GeoIP2 Precision web service end
-points. The end points are Country, City, and Insights. Each end point returns
-a different set of data about an IP address, with Country returning the least
+The web services are Country, City Plus, and Insights. Each service returns a
+different set of data about an IP address, with Country returning the least
 data and Insights the most.
 
-Each web service end point is represented by a different model class, and
-these model classes in turn contain multiple record classes. The record
-classes have attributes which contain data about the IP address.
+Each service is represented by a different model class, and these model
+classes in turn contain multiple record classes. The record classes have
+attributes which contain data about the IP address.
 
-If the web service does not return a particular piece of data for an IP
-address, the associated attribute is not populated.
+If the service does not return a particular piece of data for an IP address,
+the associated attribute is not populated.
 
-The web service may not return any information for an entire record, in which
+The service may not return any information for an entire record, in which
 case all of the attributes for that record class will be empty.
 
 SSL
@@ -27,7 +23,8 @@ Requests to the web service are always made with SSL.
 
 import ipaddress
 import json
-from typing import Any, Dict, cast, List, Optional, Type, Union
+from collections.abc import Sequence
+from typing import Any, Optional, Union, cast
 
 import aiohttp
 import aiohttp.http
@@ -61,7 +58,7 @@ class BaseClient:  # pylint: disable=missing-class-docstring, too-few-public-met
     _account_id: str
     _host: str
     _license_key: str
-    _locales: List[str]
+    _locales: Sequence[str]
     _timeout: float
 
     def __init__(
@@ -69,11 +66,11 @@ class BaseClient:  # pylint: disable=missing-class-docstring, too-few-public-met
         account_id: int,
         license_key: str,
         host: str,
-        locales: Optional[List[str]],
+        locales: Optional[Sequence[str]],
         timeout: float,
     ) -> None:
         """Construct a Client."""
-        # pylint: disable=too-many-arguments
+        # pylint: disable=too-many-arguments,too-many-positional-arguments
         if locales is None:
             locales = ["en"]
 
@@ -106,7 +103,11 @@ class BaseClient:  # pylint: disable=missing-class-docstring, too-few-public-met
             ) from ex
 
     def _exception_for_error(
-        self, status: int, content_type: str, body: str, uri: str
+        self,
+        status: int,
+        content_type: str,
+        body: str,
+        uri: str,
     ) -> GeoIP2Error:
         if 400 <= status < 500:
             return self._exception_for_4xx_status(status, content_type, body, uri)
@@ -115,7 +116,11 @@ class BaseClient:  # pylint: disable=missing-class-docstring, too-few-public-met
         return self._exception_for_non_200_status(status, uri, body)
 
     def _exception_for_4xx_status(
-        self, status: int, content_type: str, body: str, uri: str
+        self,
+        status: int,
+        content_type: str,
+        body: str,
+        uri: str,
     ) -> GeoIP2Error:
         if not body:
             return HTTPError(
@@ -142,21 +147,27 @@ class BaseClient:  # pylint: disable=missing-class-docstring, too-few-public-met
                 uri,
                 body,
             )
-        else:
-            if "code" in decoded_body and "error" in decoded_body:
-                return self._exception_for_web_service_error(
-                    decoded_body.get("error"), decoded_body.get("code"), status, uri
-                )
-            return HTTPError(
-                "Response contains JSON but it does not specify code or error keys",
+
+        if "code" in decoded_body and "error" in decoded_body:
+            return self._exception_for_web_service_error(
+                decoded_body.get("error"),
+                decoded_body.get("code"),
                 status,
                 uri,
-                body,
             )
+        return HTTPError(
+            "Response contains JSON but it does not specify code or error keys",
+            status,
+            uri,
+            body,
+        )
 
     @staticmethod
     def _exception_for_web_service_error(
-        message: str, code: str, status: int, uri: str
+        message: str,
+        code: str,
+        status: int,
+        uri: str,
     ) -> Union[
         AuthenticationError,
         AddressNotFoundError,
@@ -184,7 +195,9 @@ class BaseClient:  # pylint: disable=missing-class-docstring, too-few-public-met
 
     @staticmethod
     def _exception_for_5xx_status(
-        status: int, uri: str, body: Optional[str]
+        status: int,
+        uri: str,
+        body: Optional[str],
     ) -> HTTPError:
         return HTTPError(
             f"Received a server error ({status}) for {uri}",
@@ -195,7 +208,9 @@ class BaseClient:  # pylint: disable=missing-class-docstring, too-few-public-met
 
     @staticmethod
     def _exception_for_non_200_status(
-        status: int, uri: str, body: Optional[str]
+        status: int,
+        uri: str,
+        body: Optional[str],
     ) -> HTTPError:
         return HTTPError(
             f"Received a very surprising HTTP status ({status}) for {uri}",
@@ -219,8 +234,11 @@ class AsyncClient(BaseClient):
     The following keyword arguments are also accepted:
 
     :param host: The hostname to make a request against. This defaults to
-      "geoip.maxmind.com". To use the GeoLite2 web service instead of GeoIP2
-      Precision, set this to "geolite.info".
+      "geoip.maxmind.com". To use the GeoLite2 web service instead of the
+      GeoIP2 web service, set this to "geolite.info". To use the Sandbox
+      GeoIP2 web service instead of the production GeoIP2 web service, set
+      this to "sandbox.maxmind.com". The sandbox allows you to experiment
+      with the API without affecting your production data.
     :param locales: This is list of locale codes. This argument will be
       passed on to record classes to use when their name properties are
       called. The default value is ['en'].
@@ -257,12 +275,12 @@ class AsyncClient(BaseClient):
     _existing_session: aiohttp.ClientSession
     _proxy: Optional[str]
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         account_id: int,
         license_key: str,
         host: str = "geoip.maxmind.com",
-        locales: Optional[List[str]] = None,
+        locales: Optional[Sequence[str]] = None,
         timeout: float = 60,
         proxy: Optional[str] = None,
     ) -> None:
@@ -276,7 +294,7 @@ class AsyncClient(BaseClient):
         self._proxy = proxy
 
     async def city(self, ip_address: IPAddress = "me") -> City:
-        """Call City endpoint with the specified IP.
+        """Call City Plus endpoint with the specified IP.
 
         :param ip_address: IPv4 or IPv6 address as a string. If no
            address is provided, the address that the web service is
@@ -286,7 +304,8 @@ class AsyncClient(BaseClient):
 
         """
         return cast(
-            City, await self._response_for("city", geoip2.models.City, ip_address)
+            City,
+            await self._response_for("city", geoip2.models.City, ip_address),
         )
 
     async def country(self, ip_address: IPAddress = "me") -> Country:
@@ -307,7 +326,7 @@ class AsyncClient(BaseClient):
     async def insights(self, ip_address: IPAddress = "me") -> Insights:
         """Call the Insights endpoint with the specified IP.
 
-        Insights is only supported by GeoIP2 Precision. The GeoLite2 web
+        Insights is only supported by the GeoIP2 web service. The GeoLite2 web
         service does not support it.
 
         :param ip_address: IPv4 or IPv6 address as a string. If no address
@@ -335,7 +354,7 @@ class AsyncClient(BaseClient):
     async def _response_for(
         self,
         path: str,
-        model_class: Union[Type[Insights], Type[City], Type[Country]],
+        model_class: Union[type[Insights], type[City], type[Country]],
         ip_address: IPAddress,
     ) -> Union[Country, City, Insights]:
         uri = self._uri(path, ip_address)
@@ -347,10 +366,10 @@ class AsyncClient(BaseClient):
             if status != 200:
                 raise self._exception_for_error(status, content_type, body, uri)
             decoded_body = self._handle_success(body, uri)
-            return model_class(decoded_body, locales=self._locales)
+            return model_class(self._locales, **decoded_body)
 
-    async def close(self):
-        """Close underlying session
+    async def close(self) -> None:
+        """Close underlying session.
 
         This will close the session and any associated connections.
         """
@@ -378,8 +397,11 @@ class Client(BaseClient):
     The following keyword arguments are also accepted:
 
     :param host: The hostname to make a request against. This defaults to
-      "geoip.maxmind.com". To use the GeoLite2 web service instead of GeoIP2
-      Precision, set this to "geolite.info".
+      "geoip.maxmind.com". To use the GeoLite2 web service instead of the
+      GeoIP2 web service, set this to "geolite.info". To use the Sandbox
+      GeoIP2 web service instead of the production GeoIP2 web service, set
+      this to "sandbox.maxmind.com". The sandbox allows you to experiment
+      with the API without affecting your production data.
     :param locales: This is list of locale codes. This argument will be
       passed on to record classes to use when their name properties are
       called. The default value is ['en'].
@@ -415,14 +437,14 @@ class Client(BaseClient):
     """
 
     _session: requests.Session
-    _proxies: Optional[Dict[str, str]]
+    _proxies: Optional[dict[str, str]]
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         account_id: int,
         license_key: str,
         host: str = "geoip.maxmind.com",
-        locales: Optional[List[str]] = None,
+        locales: Optional[Sequence[str]] = None,
         timeout: float = 60,
         proxy: Optional[str] = None,
     ) -> None:
@@ -437,7 +459,7 @@ class Client(BaseClient):
             self._proxies = {"https": proxy}
 
     def city(self, ip_address: IPAddress = "me") -> City:
-        """Call City endpoint with the specified IP.
+        """Call City Plus endpoint with the specified IP.
 
         :param ip_address: IPv4 or IPv6 address as a string. If no
            address is provided, the address that the web service is
@@ -459,13 +481,14 @@ class Client(BaseClient):
 
         """
         return cast(
-            Country, self._response_for("country", geoip2.models.Country, ip_address)
+            Country,
+            self._response_for("country", geoip2.models.Country, ip_address),
         )
 
     def insights(self, ip_address: IPAddress = "me") -> Insights:
         """Call the Insights endpoint with the specified IP.
 
-        Insights is only supported by GeoIP2 Precision. The GeoLite2 web
+        Insights is only supported by the GeoIP2 web service. The GeoLite2 web
         service does not support it.
 
         :param ip_address: IPv4 or IPv6 address as a string. If no address
@@ -476,13 +499,14 @@ class Client(BaseClient):
 
         """
         return cast(
-            Insights, self._response_for("insights", geoip2.models.Insights, ip_address)
+            Insights,
+            self._response_for("insights", geoip2.models.Insights, ip_address),
         )
 
     def _response_for(
         self,
         path: str,
-        model_class: Union[Type[Insights], Type[City], Type[Country]],
+        model_class: Union[type[Insights], type[City], type[Country]],
         ip_address: IPAddress,
     ) -> Union[Country, City, Insights]:
         uri = self._uri(path, ip_address)
@@ -493,10 +517,10 @@ class Client(BaseClient):
         if status != 200:
             raise self._exception_for_error(status, content_type, body, uri)
         decoded_body = self._handle_success(body, uri)
-        return model_class(decoded_body, locales=self._locales)
+        return model_class(self._locales, **decoded_body)
 
-    def close(self):
-        """Close underlying session
+    def close(self) -> None:
+        """Close underlying session.
 
         This will close the session and any associated connections.
         """
