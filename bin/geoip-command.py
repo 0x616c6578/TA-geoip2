@@ -88,7 +88,7 @@ class GeoIPCommand(StreamingCommand):
                     except:
                         self.error_exit(None, 
                             'Error in \'geoip\': There was an issue with the "{}" database.'.format(free_db_path))
-                else:
+                elif database.lower().replace('-','_') in input_databases:
                     self.write_warning('Warning in \'geoip\': No \'{0}\' database could be found in \'{1}\'.'
                         .format(database, os.path.abspath(databases_path)))
 
